@@ -130,31 +130,30 @@ export default function ModernChatbot() {
     }
   }
 
-const loadSession = async (sessionId: string) => {
-  setCurrentSessionId(sessionId)
-  setIsLoading(true)
-  setError(null)
+  const loadSession = async (sessionId: string) => {
+    setCurrentSessionId(sessionId)
+    setIsLoading(true)
+    setError(null)
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/chat/${sessionId}`, { credentials: "include" })
-    if (!response.ok) throw new Error("Failed to load chat history")
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/${sessionId}`, { credentials: "include" })
+      if (!response.ok) throw new Error("Failed to load chat history")
 
-    const chats = await response.json()
+      const chats = await response.json()
 
-    // 🔧 Ensure each message has a timestamp
-    const enrichedChats: Message[] = chats.map((msg: any) => ({
-      ...msg,
-      timestamp: msg.timestamp || new Date().toISOString(), // fallback
-    }))
+      // 🔧 Ensure each message has a timestamp
+      const enrichedChats: Message[] = chats.map((msg: any) => ({
+        ...msg,
+        timestamp: msg.timestamp || new Date().toISOString(), // fallback
+      }))
 
-    setMessages(enrichedChats)
-  } catch (error) {
-    handleApiError(error, "Failed to load chat history")
-  } finally {
-    setIsLoading(false)
+      setMessages(enrichedChats)
+    } catch (error) {
+      handleApiError(error, "Failed to load chat history")
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
-
 
   const sendMessage = async () => {
     if (!inputValue.trim() || !currentSessionId || isTyping) return
@@ -287,43 +286,43 @@ const loadSession = async (sessionId: string) => {
     }
   }
 
-const formatTime = (dateString?: string): string => {
-  if (!dateString || typeof dateString !== "string") return "Unknown"
+  const formatTime = (dateString?: string): string => {
+    if (!dateString || typeof dateString !== "string") return "Unknown"
 
-  try {
-    const date = new Date(dateString.trim())
-    if (isNaN(date.getTime())) return "Unknown"
+    try {
+      const date = new Date(dateString.trim())
+      if (isNaN(date.getTime())) return "Unknown"
 
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-  } catch {
-    return "Unknown"
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    } catch {
+      return "Unknown"
+    }
   }
-}
 
-const formatRelativeTime = (dateString?: string) => {
-  if (!dateString) return "Unknown"
-  try {
-    const now = new Date()
-    const date = new Date(dateString.trim())
-    if (isNaN(date.getTime())) return "Unknown"
+  const formatRelativeTime = (dateString?: string) => {
+    if (!dateString) return "Unknown"
+    try {
+      const now = new Date()
+      const date = new Date(dateString.trim())
+      if (isNaN(date.getTime())) return "Unknown"
 
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      const diff = now.getTime() - date.getTime()
+      const minutes = Math.floor(diff / (1000 * 60))
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (minutes < 1) return "Just now"
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
-  } catch {
-    return "Unknown"
+      if (minutes < 1) return "Just now"
+      if (minutes < 60) return `${minutes}m ago`
+      if (hours < 24) return `${hours}h ago`
+      return `${days}d ago`
+    } catch {
+      return "Unknown"
+    }
   }
-}
 
   const currentChunk = currentReason[currentSourceIndex]
 
