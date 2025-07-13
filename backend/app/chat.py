@@ -14,7 +14,7 @@ logger = logging.getLogger("chat")
 @router.post("/ask")
 async def ask_question(query: Query):
     try:
-        # Step 1: Embed question and retrieve context from Pinecone
+        # Step 1: Embed question and retrieve relevant context from Pinecone
         question_vector = embed_model.encode(query.question).tolist()
         matches = index.query(vector=question_vector, top_k=5, include_metadata=True)
 
@@ -27,50 +27,68 @@ async def ask_question(query: Query):
 
             if text:
                 try:
-                    decompressed = gzip.decompress(base64.b64decode(text)).decode()
+                    decompressed = gzip.decompress(base64.b64decode(text)).decode("utf-8", errors="ignore")
+                    decompressed = decompressed.strip()
                     context_parts.append(decompressed)
                     reason_docs.append({
                         "text": decompressed,
                         "score": match.score,
-                        "source" : source,
-                        "page_range" :page_range,
-
+                        "source": source,
+                        "page_range": page_range
                     })
                 except Exception as e:
-                    logger.warning(f"Decompression error: {e}")
+                    logger.warning(f"[Decompression error] Document: {source}, Page: {page_range} | Error: {e}")
 
-        # Step 2: Prepare prompt
-        chat_history = list(chat_history_col.find({"session_id": query.session_id}))
-        memory = []
+        # Step 2: Retrieve the entire chat history for the session
+        chat_history_query = {"session_id": query.session_id}
+        chat_history = list(chat_history_col.find(chat_history_query).sort("timestamp", 1))
+
+        conversation_lines = []
+        history_for_response = []  # To store chat history for the response
         for entry in chat_history:
-            memory.append(f"user: {entry['query']}")
-            memory.append(f"assistant: {entry['answer']}")
+            q = entry.get("query", "").strip()
+            a = entry.get("answer", "").strip()
+            if q and a:
+                conversation_lines.append(f"user: {q}")
+                conversation_lines.append(f"assistant: {a}")
+                history_for_response.append({"question": q, "answer": a})
 
-        memory.append(f"user: {query.question}")
+        # Add the current question to conversation_lines for the prompt
+        conversation_lines.append(f"user: {query.question.strip()}")
 
-        conversation = "\n".join(memory)
+        # Step 3: Compose the prompt with chat history
         context_text = "\n---\n".join(context_parts)
+        conversation_text = "\n".join(conversation_lines)
+
         prompt = f"""
-        You are a helpful assistant answering questions based only on the provided document context.
+You are a helpful assistant in a multi-turn conversation. 
+Answer the user's questions based strictly on the CONTEXT and the CONVERSATION provided below.
+The user may ask follow-up questions — use the entire conversation history to understand the context, especially for follow-up questions.
 
-        CONTEXT:
-        {context_text}
+Rules:
+- Use only the provided CONTEXT and CONVERSATION to answer.
+- Do not guess or use any outside knowledge.
+- Keep the format and style of the source text.
+- No bullet points, symbols, or newlines unless present in the context.
+- If the answer is not found in the CONTEXT, respond exactly with: "I couldn’t find that information in the provided documents."
 
-        CONVERSATION:
-        {conversation}
+---
 
-        Instructions:
-        - Only use the information in the CONTEXT.
-        - No line breaks (\\n), bullets, or symbols unless present in CONTEXT.
-        - If the answer is not found, respond exactly with: \"I couldn't find that information in the document.\"
-        """
+CONTEXT:
+{context_text}
 
-        # Step 3: Call Gemini
+---
+
+CONVERSATION:
+{conversation_text}
+""".strip()
+
+        # Step 4: Generate answer from Gemini
         response = gemini_model.generate_content(prompt)
-        time.sleep(15)
+        time.sleep(2)
         answer = response.text.strip()
 
-        # Step 4: Store reasoning
+        # Step 5: Store reasoning
         reason_id = reason_col.insert_one({
             "session_id": query.session_id,
             "question": query.question,
@@ -78,7 +96,7 @@ async def ask_question(query: Query):
             "timestamp": datetime.utcnow()
         }).inserted_id
 
-        # Step 5: Store question+answer in one chat document
+        # Step 6: Save chat history
         chat_history_col.insert_one({
             "session_id": query.session_id,
             "query": query.question,
@@ -87,9 +105,15 @@ async def ask_question(query: Query):
             "timestamp": datetime.utcnow()
         })
 
+        # Add the current question and answer to the history for the response
+        history_for_response.append({"question": query.question, "answer": answer})
+
+        # Step 7: Return final answer with chat history
         return {
             "answer": answer,
-            "reason": reason_docs
+            "reason": reason_docs,
+            "reason_id": str(reason_id),
+            "chat_history": history_for_response  # Include the full chat history
         }
 
     except Exception as e:
