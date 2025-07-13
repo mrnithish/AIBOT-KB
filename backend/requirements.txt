@@ -1,0 +1,17 @@
+fastapi==0.116.0
+uvicorn[standard]
+python-dotenv
+aiofiles
+llama-cloud-services
+nltk
+sentence-transformers
+pinecone
+google-generativeai
+retry
+dnspython
+requests
+pydantic==2.11.7
+pydantic_core==2.33.2
+pydantic-settings==2.10.1
+pymongo==4.13.2
+python-multipart==0.0.20

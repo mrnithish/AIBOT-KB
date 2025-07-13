@@ -1,0 +1,39 @@
+# Python-related files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.dist-info/
+
+# Local development files
+.git/
+.gitignore
+.env.example
+*.log
+*.md
+tests/
+venv/
+.venv/
+
+# Build and cache files
+*.bak
+*.swp
+*.swo
+.pytest_cache/
+.coverage
+.cache/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Miscellaneous
+Dockerfile
+*.dockerignore
+*.yml
+*.yaml
+*.txt
+!requirements.txt
