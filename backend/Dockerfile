@@ -43,5 +43,6 @@ COPY --from=builder /app /app
 # Expose FastAPI port
 EXPOSE 8000
 
+
 # ✅ Use correct path to Python binary in distroless
 CMD ["/usr/local/bin/python3", "-m", "uvicorn", "app:app", "--host=0.0.0.0", "--port=8000"]
