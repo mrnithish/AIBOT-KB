@@ -2,7 +2,6 @@
 # STAGE 1 — Builder
 # =============================
 FROM python:3.12-slim-bookworm AS builder
-
 WORKDIR /app
 
 # Install build dependencies
