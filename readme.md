@@ -10,6 +10,7 @@
     
 *   Answers queries **only if information is found** in the documents.  
     
+
 *   Responds with: _"I couldn't find that information in the provided documents."_ if the answer is not found.  
     
 *   Supports **basic follow-up questions** using conversational history.  
