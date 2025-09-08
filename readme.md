@@ -16,7 +16,6 @@
 *   Supports **basic follow-up questions** using conversational history.  
     
 *   Uses any suitable tech stack including **OpenAI**, **Gemini**, **open-source LLMs**, **Pinecone**, etc.  
-    
 
 ## Approach
 
