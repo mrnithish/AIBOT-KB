@@ -3,7 +3,6 @@
 
 **KnowledgeBot** is an intelligent document-grounded assistant that answers user questions based strictly on the content from uploaded documents. It uses semantic search and LLM-based reasoning to provide precise, context-aware answers through a simple chat interface.
 
-
 ## Key Requirements
 
 *   Accepts **natural language questions** via a chat interface.  
